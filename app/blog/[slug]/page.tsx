@@ -2,6 +2,7 @@ import { MDXRemote } from 'next-mdx-remote/rsc'
 import { getPostBySlug, getAllPosts } from '@/lib/mdx'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import CodeBlock, { InlineCode } from '@/components/CodeBlock'
 
 // Generate static params for all blog posts
 export async function generateStaticParams() {
@@ -62,7 +63,19 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
           )}
         </header>
         
-        <MDXRemote source={post.content} />
+        <MDXRemote 
+          source={post.content} 
+          components={{
+            code: ({ className, children, ...props }) => {
+              // If className exists, it's a code block (from ```language)
+              // If no className, it's inline code (from `text`)
+              if (className) {
+                return <CodeBlock className={className}>{children}</CodeBlock>
+              }
+              return <InlineCode>{children}</InlineCode>
+            },
+          }}
+        />
       </article>
     </div>
   )
