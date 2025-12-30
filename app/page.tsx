@@ -10,9 +10,26 @@ export default function Home() {
       <main className="container mx-auto px-4 py-16 max-w-6xl">
         {/* Hero Section */}
         <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-            ooddaa.co
+          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+            Dmitry 'Oda' Vikhorev
           </h1>
+          
+          {/* Bio Tags */}
+          <div className="flex flex-wrap justify-center gap-3 mb-8">
+            <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-medium">
+              Senior Software Engineer
+            </span>
+            <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-medium">
+              Fullstack
+            </span>
+            <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-medium">
+              Father
+            </span>
+            <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-medium">
+              Jiu-Jitsu Purple Belt
+            </span>
+          </div>
+          
           <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-8">
             Developer, learner, builder. Documenting my journey through code, puzzles, and projects.
           </p>

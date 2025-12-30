@@ -1,0 +1,99 @@
+---
+title: "AoC 2025: Assuming Uniformity From Test Input"
+date: "2025-12-30"
+description: "Test input is a gift, not a specification. Real input will betray your assumptions."
+tags: ["aoc", "AoC", "Go", "debugging", "input-parsing"]
+---
+
+# The Mistake
+
+Treating test input as *the* specification instead of *one* example.
+
+Test inputs in AoC are often simpler, smaller, and more uniform than real inputs. When you build your solution around test input's specific properties—fixed widths, uniform patterns, no edge cases—you're building a house of cards.
+
+## My Gloomy Reality
+
+Day 7's test input was a neat 15-character-wide grid:
+
+```text path=null start=null
+.......S.......
+...............
+.......^.......
+```
+
+15 characters. Nice and symmetric. My brain latched onto this and I started making implicit assumptions:
+- "The grid is probably always 15 wide"
+- "S is always in the center"
+- "Every row has the same width"
+
+I wrote code that worked perfectly on the test input. Then I ran it on the real input and got... nonsense.
+
+The real input? **141 characters wide**. Nearly 10x the test input's width. Same concept, completely different scale:
+
+```text path=null start=null
+......................................................................S......................................................................
+.............................................................................................................................................
+......................................................................^......................................................................
+```
+
+But it wasn't just the width. My mental model had quietly absorbed other "facts" from the test input that weren't actually facts:
+- Test had 16 rows → Real had 142 rows
+- Test splitters were spread predictably → Real was a dense fractal pattern
+- Test positions were small numbers I could trace manually → Real required memoization to avoid exponential blowup
+
+Every assumption I'd made from staring at the test input was wrong for the real input.
+
+# The Insight
+
+The moment I ran my solution on `input` instead of `test-input` and watched it either timeout or produce garbage numbers, I knew something was fundamentally wrong.
+
+The debugging trigger was simple:
+
+```bash path=null start=null
+wc -l input                    # 142 lines, not 16
+head -1 input | wc -c          # 142 chars, not 15
+```
+
+My code wasn't broken—my mental model was. I'd built a solution for a 15x16 grid and was surprised when it failed on a 141x142 grid.
+
+The real lesson hit when I realized: the test input exists to help you understand the *rules*, not the *scale* or *edge cases*. The puzzle description tells you what happens. The test input shows you one scenario. The real input is where the problem actually lives.
+
+# The Fix
+
+Before writing any code, I now run this checklist:
+
+```bash path=null start=null
+wc -l input                    # how many lines?
+head -1 input | wc -c          # how wide is line 1?
+head -5 input                  # what does it actually look like?
+tail -5 input                  # how does it end?
+cat input | head -1 | less -S  # view without terminal wrapping
+```
+
+And more importantly, I now treat test input as **one example among infinite possibilities**:
+
+```go path=null start=null
+// ❌ Before: hardcoded assumptions from test input
+const gridWidth = 15  // "it's always 15, right?"
+
+// ✅ After: derive properties from actual input
+gridWidth := len(input[0])  // works for 15 or 141
+```
+
+The fix wasn't in the code—it was in my approach. I stopped assuming and started measuring.
+
+# Lesson Learned
+
+**Test input is ONE example, not THE specification.**
+
+Before coding:
+1. Measure real input dimensions (`wc -l`, `wc -c`)
+2. Visually inspect both ends (`head`, `tail`)
+3. Check for terminal line-wrapping illusions (`less -S`)
+4. Ask: "What assumptions am I making that test input might not reveal?"
+
+The test input is training wheels. The real input is the actual bike race.
+
+---
+
+**Original puzzle:** [Advent of Code 2025 Day 7](https://adventofcode.com/2025/day/7)
