@@ -1,0 +1,119 @@
+---
+title: "Premature Abstraction"
+date: "2025-12-21"
+description: "Building elaborate data structures before understanding minimum required state."
+tags: ["AoC:25:07:1", "Go", "data-structures", "abstraction"]
+---
+
+# The Mistake
+
+Building elaborate data structures before understanding minimum required state.
+
+The problem was simple: track beams moving down through a grid, splitting when they hit `^` splitters, and count how many splits happen. But I didn't solve the simple problem—I solved a *theoretically elegant* problem that didn't exist.
+
+## My Gloomy Reality
+
+I built this monstrosity:
+
+```go path=null start=null
+type (
+    T   = map[int]bool
+    Row struct {
+        splitters T
+        beams     T
+        count     int
+    }
+)
+type Grid = []Row
+```
+
+A `Grid` of `Row`s, where each `Row` tracks:
+- `splitters` — precomputed map of splitter positions
+- `beams` — current beam positions at this row
+- `count` — splits that happened here
+
+Then I built an elaborate `BuildGrid` function that:
+1. Scans every row for `^` characters
+2. Precomputes splitter positions into maps
+3. Compacts out empty rows
+4. Creates this whole parallel data structure
+
+```go path=null start=null
+func BuildGrid(input []string) Grid {
+    grid := []Row{}
+    manifoldBeam := strings.Index(input[0], "S")
+
+    grid = append(grid, Row{T{}, T{manifoldBeam: true}, 0})
+    // we're gonna skip empty rows and number resulting rows seqentially
+    // ie we will compact the grid
+    for _, row := range input[1:] {
+        splitters, beams := T{}, T{}
+        for i := 0; i < len(row); i++ {
+            if row[i] == '^' {
+                splitters[i] = true
+            }
+        }
+        if len(splitters) == 0 {
+            continue
+        }
+        grid = append(grid, Row{
+            splitters: splitters,
+            beams:     beams,
+            count:     0,
+        })
+    }
+    return grid
+}
+```
+
+Why did I precompute splitter positions? Why did I need a `Row` struct? Why did I compact the grid?
+
+Because it felt *proper*. Like something a *real* programmer would do.
+
+# The Insight
+
+The problem only asked: "count how many times beams hit splitters."
+
+What's the minimum state needed?
+- Current beam positions: `map[int]bool`
+- That's it.
+
+The splitters don't need precomputing—just check `row[col] == '^'` on the fly. The grid doesn't need compacting—just iterate through it. The `Row` struct doesn't need to exist—the original `[]string` input already *is* the grid.
+
+I'd built a whole abstraction layer for a problem that could be solved by walking through strings and checking characters.
+
+# The Fix
+
+All I actually needed:
+
+```go path=null start=null
+beams := map[int]bool{startCol: true}  // current beam positions
+
+for _, row := range input {
+    nextBeams := map[int]bool{}
+    for col := range beams {
+        if row[col] == '^' {
+            total++  // count the split
+            nextBeams[col-1] = true
+            nextBeams[col+1] = true
+        } else {
+            nextBeams[col] = true  // beam continues
+        }
+    }
+    beams = nextBeams
+}
+```
+
+No `Grid`. No `Row`. No precomputation. Just track beam positions and update them as you go.
+
+# Lesson Learned
+
+**Before building data structures, ask: "What's the minimum state I need to carry forward?"**
+
+Often it's just one small variable updated each iteration. The elaborate `Grid` with `Row{splitters, beams, count}` was solving a problem I invented, not the problem I was given.
+
+The best abstraction is often no abstraction. Raw data + simple iteration beats clever structures that nobody asked for.
+
+---
+
+**Original puzzle:** [Advent of Code 2025 Day 7](https://adventofcode.com/2025/day/7)

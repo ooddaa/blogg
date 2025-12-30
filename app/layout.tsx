@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Dmitry 'Oda' Vikhorev - Developer Blog",
-  description: "Senior Software Engineer, Fullstack Developer, Father, Jiu-Jitsu Purple Belt. Documenting my journey through code, puzzles, and projects.",
+  title: "Dmitry Vikhorev - Developer Blog",
+  description: "Senior Software Engineer, Father, Jiu-Jitsu Purple Belt, Musician. Documenting my journey through code, puzzles, and projects.",
 };
 
 export default function RootLayout({

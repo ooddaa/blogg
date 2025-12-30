@@ -11,29 +11,29 @@ export default function Home() {
         {/* Hero Section */}
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-            Dmitry 'Oda' Vikhorev
+            Dmitry Vikhorev
           </h1>
-          
+
           {/* Bio Tags */}
           <div className="flex flex-wrap justify-center gap-3 mb-8">
-            <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-medium">
-              Senior Software Engineer
-            </span>
-            <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-medium">
-              Fullstack
-            </span>
             <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-medium">
               Father
             </span>
             <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-medium">
+              Senior Software Engineer
+            </span>
+            <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-medium">
               Jiu-Jitsu Purple Belt
             </span>
+            <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-medium">
+              Musician
+            </span>
           </div>
-          
+
           <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-8">
             Developer, learner, builder. Documenting my journey through code, puzzles, and projects.
           </p>
-          <Link 
+          <Link
             href="/blog"
             className="inline-flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-lg hover:bg-slate-700 transition-colors"
           >
@@ -46,7 +46,7 @@ export default function Home() {
           {sections.map((section) => {
             const sectionInfo = getSectionInfo(section)
             const latestPost = latestPosts[section]
-            
+
             return (
               <Link
                 key={section}
@@ -56,7 +56,7 @@ export default function Home() {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{sectionInfo.icon}</span>
-                    <h2 className="text-xl font-semibold group-hover:text-blue-600 transition-colors">
+                    <h2 className="text-xl font-semibold group-hover:text-slate-700 transition-colors">
                       {sectionInfo.title}
                     </h2>
                   </div>
@@ -64,11 +64,11 @@ export default function Home() {
                     →
                   </div>
                 </div>
-                
+
                 <p className="text-slate-600 text-sm mb-4">
                   {sectionInfo.description}
                 </p>
-                
+
                 {latestPost ? (
                   <div className="border-t pt-4">
                     <h3 className="font-medium text-sm text-slate-900 mb-1">
@@ -89,7 +89,7 @@ export default function Home() {
             )
           })}
         </div>
-        
+
         {/* Footer */}
         <div className="text-center">
           <p className="text-slate-500 text-sm">

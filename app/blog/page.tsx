@@ -12,7 +12,7 @@ export default function BlogPage() {
         {posts.map((post) => (
           <article key={post.slug} className="border-b pb-6">
             <Link href={`/blog/${post.slug}`} className="group">
-              <h2 className="text-2xl font-semibold mb-2 group-hover:text-blue-600">
+              <h2 className="text-2xl font-semibold mb-2 group-hover:text-slate-700">
                 {post.title}
               </h2>
               <time className="text-sm text-slate-600">{post.date}</time>

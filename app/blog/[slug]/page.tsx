@@ -41,7 +41,7 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Link href="/blog" className="text-blue-600 hover:underline mb-4 inline-block">
+      <Link href="/blog" className="text-slate-600 hover:text-slate-800 hover:underline mb-4 inline-block">
         ← Back to all posts
       </Link>
       

@@ -12,7 +12,7 @@ export default function SectionPage({ section, posts }: SectionPageProps) {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="mb-8">
-        <Link href="/" className="text-blue-600 hover:underline mb-4 inline-block">
+        <Link href="/" className="text-slate-600 hover:text-slate-800 hover:underline mb-4 inline-block">
           ← Back to home
         </Link>
         
@@ -33,7 +33,7 @@ export default function SectionPage({ section, posts }: SectionPageProps) {
           {posts.map((post) => (
             <article key={post.slug} className="border-b pb-6">
               <Link href={`/blog/${post.slug}`} className="group">
-                <h2 className="text-2xl font-semibold mb-2 group-hover:text-blue-600">
+                <h2 className="text-2xl font-semibold mb-2 group-hover:text-slate-700">
                   {post.title}
                 </h2>
                 <time className="text-sm text-slate-600">{post.date}</time>

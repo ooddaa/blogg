@@ -1,99 +1,138 @@
 ---
-title: "AoC 2025: Assuming Uniformity From Test Input"
-date: "2025-12-30"
-description: "Test input is a gift, not a specification. Real input will betray your assumptions."
-tags: ["aoc", "AoC", "Go", "debugging", "input-parsing"]
+title: "Three Input Parsing Mistakes"
+date: "2025-12-20"
+description: "Assuming uniformity, ignoring line-wrapping, and premature transformation—all from one puzzle."
+tags: ["AoC:25:06:1", "Go", "debugging", "input-parsing"]
 ---
 
-# The Mistake
+Day 6's "cephalopod math worksheet" taught me three painful lessons about input parsing. All from the same puzzle.
+
+# Mistake 1: Assuming Uniformity From Test Input
 
 Treating test input as *the* specification instead of *one* example.
 
-Test inputs in AoC are often simpler, smaller, and more uniform than real inputs. When you build your solution around test input's specific properties—fixed widths, uniform patterns, no edge cases—you're building a house of cards.
+## My Gloomy Reality
+
+The test input looked beautifully uniform:
+
+```text path=null start=null
+123 328  51 64 
+ 45 64  387 23 
+  6 98  215 314
+*   +   *   +  
+```
+
+Four columns. Each exactly 4 characters wide. My brain immediately latched onto this pattern: "Ah, columns are fixed-width! I'll just slice the string every 4 characters."
+
+Then I ran it on the real input:
+
+```text path=null start=null
+ 79 338  2   956 3311 92  29 93 4  878 76 988 3    1  76 8   758 ...
+ 84 921  4  2238 3478 849 36 65 1  359 57 673 6333 5  55 62  846 ...
+562 5154 8  2186    1 769 41 59 49 371 77 927 5961 15 45 798 961 ...
+*   +    +  +    +    *   +  *  *  +   +  *   +    +  *  *   +   ...
+```
+
+Variable-width columns. Some are 2 characters, some are 4, some are 5. My hardcoded "slice every 4 chars" approach was completely wrong.
+
+# Mistake 2: Line-Wrapping Illusion
+
+Your terminal wraps long lines. 5 rows can look like 50+.
 
 ## My Gloomy Reality
 
-Day 7's test input was a neat 15-character-wide grid:
+When I first opened the real input, my terminal showed what looked like dozens of rows of numbers. I started panicking—"wait, the problem said there's only one operator row at the bottom, but I see numbers everywhere!"
 
-```text path=null start=null
-.......S.......
-...............
-.......^.......
+Turns out the input was just 5 rows. But each row was ~1800 characters wide, and my terminal was wrapping them into visual chaos.
+
+I wasted time trying to understand a "complex multi-row structure" that didn't exist.
+
+# Mistake 3: Premature Input Transformation
+
+Don't `TrimSpace`, `ToLower`, or transform input until you understand WHY.
+
+## My Gloomy Reality
+
+My first instinct was to clean up the input:
+
+```go path=null start=null
+// ❌ "Let me just clean this up..."
+line = strings.TrimSpace(line)
 ```
 
-15 characters. Nice and symmetric. My brain latched onto this and I started making implicit assumptions:
-- "The grid is probably always 15 wide"
-- "S is always in the center"
-- "Every row has the same width"
+This destroyed the column alignment. The leading spaces in ` 79 338  2 ...` weren't noise—they were *data*. They indicated that position 0 was part of a column, and the number `79` was right-aligned within it.
 
-I wrote code that worked perfectly on the test input. Then I ran it on the real input and got... nonsense.
-
-The real input? **141 characters wide**. Nearly 10x the test input's width. Same concept, completely different scale:
-
-```text path=null start=null
-......................................................................S......................................................................
-.............................................................................................................................................
-......................................................................^......................................................................
-```
-
-But it wasn't just the width. My mental model had quietly absorbed other "facts" from the test input that weren't actually facts:
-- Test had 16 rows → Real had 142 rows
-- Test splitters were spread predictably → Real was a dense fractal pattern
-- Test positions were small numbers I could trace manually → Real required memoization to avoid exponential blowup
-
-Every assumption I'd made from staring at the test input was wrong for the real input.
+By trimming, I shifted all the numbers left and broke the positional relationship with the operator row.
 
 # The Insight
 
-The moment I ran my solution on `input` instead of `test-input` and watched it either timeout or produce garbage numbers, I knew something was fundamentally wrong.
+All three mistakes had the same root cause: I was **imposing structure** instead of **reading structure**.
 
-The debugging trigger was simple:
+The breakthrough came when I stopped looking at the *numbers* and started looking at the *operators*:
 
-```bash path=null start=null
-wc -l input                    # 142 lines, not 16
-head -1 input | wc -c          # 142 chars, not 15
+```text path=null start=null
+*   +    +  +    +    *   +  *  *  +   ...  
 ```
 
-My code wasn't broken—my mental model was. I'd built a solution for a 15x16 grid and was surprised when it failed on a 141x142 grid.
+The operators weren't evenly spaced! Each operator marks the start of its column, and the spaces after it define that column's width. The operator row *is* the column specification.
 
-The real lesson hit when I realized: the test input exists to help you understand the *rules*, not the *scale* or *edge cases*. The puzzle description tells you what happens. The test input shows you one scenario. The real input is where the problem actually lives.
+Once I understood that, everything clicked:
+- Don't assume column widths—discover them from the operator positions
+- Don't trust what your terminal shows—measure with `wc -l`
+- Don't "clean" data until you understand what's noise vs signal
 
 # The Fix
 
-Before writing any code, I now run this checklist:
+First, understand the input before touching it:
 
 ```bash path=null start=null
-wc -l input                    # how many lines?
-head -1 input | wc -c          # how wide is line 1?
-head -5 input                  # what does it actually look like?
-tail -5 input                  # how does it end?
-cat input | head -1 | less -S  # view without terminal wrapping
+wc -l input                    # 5 rows, not 50
+head -1 input | wc -c          # 1847 chars wide
+less -S input                  # view without wrapping
 ```
 
-And more importantly, I now treat test input as **one example among infinite possibilities**:
+Then, discover structure from the data itself:
 
 ```go path=null start=null
-// ❌ Before: hardcoded assumptions from test input
-const gridWidth = 15  // "it's always 15, right?"
+// ❌ Before: hardcoded assumptions
+columnWidth := 4  // "every column is 4 chars, right?"
+line = strings.TrimSpace(line)  // "whitespace is noise, right?"
 
-// ✅ After: derive properties from actual input
-gridWidth := len(input[0])  // works for 15 or 141
+// ✅ After: discover columns from the operator row
+func findColumns(opRow string) []Column {
+    var cols []Column
+    i := 0
+    for i < len(opRow) {
+        if opRow[i] == ' ' {
+            i++
+            continue
+        }
+        op := rune(opRow[i])
+        start := i
+        i++
+        for i < len(opRow) && opRow[i] == ' ' {
+            i++
+        }
+        cols = append(cols, Column{Op: op, Start: start, End: i})
+    }
+    return cols
+}
 ```
 
-The fix wasn't in the code—it was in my approach. I stopped assuming and started measuring.
+# Lessons Learned
 
-# Lesson Learned
+**1. Test input is ONE example, not THE specification.**
+The test exists to show the rules, not the scale or edge cases.
 
-**Test input is ONE example, not THE specification.**
+**2. Always `wc -l` before you trust your eyes.**
+Your terminal lies. Line-wrapping creates phantom structure.
 
-Before coding:
-1. Measure real input dimensions (`wc -l`, `wc -c`)
-2. Visually inspect both ends (`head`, `tail`)
-3. Check for terminal line-wrapping illusions (`less -S`)
-4. Ask: "What assumptions am I making that test input might not reveal?"
+**3. Parse raw first, transform only what you KNOW needs transforming.**
+Whitespace might be data. Don't `TrimSpace` until you're sure it's noise.
 
-The test input is training wheels. The real input is the actual bike race.
+**4. Look for structure *in* the data, don't impose structure *on* the data.**
+The operator row told me exactly where the columns were—I just wasn't listening.
 
 ---
 
-**Original puzzle:** [Advent of Code 2025 Day 7](https://adventofcode.com/2025/day/7)
+**Original puzzle:** [Advent of Code 2025 Day 6](https://adventofcode.com/2025/day/6)

@@ -16,7 +16,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: var(--font-geist-sans), sans-serif;
 }
 
 /* Force light theme for better readability */
@@ -28,7 +28,7 @@ body {
 .prose {
   --tw-prose-body: #374151;
   --tw-prose-headings: #111827;
-  --tw-prose-links: #2563eb;
+  --tw-prose-links: #475569;
   --tw-prose-bold: #111827;
   --tw-prose-counters: #6b7280;
   --tw-prose-bullets: #d1d5db;
@@ -43,6 +43,37 @@ body {
   --tw-prose-td-borders: #e5e7eb;
 }
 
+/* Better section grouping - reduce spacing between related elements */
+.prose h1 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.prose h2 {
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.prose h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose p {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose ul, .prose ol {
+  margin-top: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.prose li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
 /* Style inline code exactly like tags */
 .prose code:not(pre code) {
   background-color: #f1f5f9;
@@ -52,7 +83,7 @@ body {
   font-size: 0.75rem;
   font-weight: 500;
   border: none;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 .prose code:not(pre code):before,

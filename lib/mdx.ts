@@ -70,9 +70,17 @@ export type Section = typeof SECTIONS[keyof typeof SECTIONS]
 // Get posts filtered by section
 export function getPostsBySection(section: Section): Post[] {
   const allPosts = getAllPosts()
-  return allPosts.filter(post => 
-    post.tags && post.tags.includes(section)
-  )
+  return allPosts.filter(post => {
+    if (!post.tags) return false
+    
+    // Special handling for AoC section - match any tag starting with "AoC:"
+    if (section === SECTIONS.AOC) {
+      return post.tags.some(tag => tag.startsWith('AoC:'))
+    }
+    
+    // For other sections, match exact tag
+    return post.tags.includes(section)
+  })
 }
 
 // Get latest post from each section for homepage
