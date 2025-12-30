@@ -14,7 +14,12 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Dmitry Vikhorev - Developer Blog",
-  description: "Senior Software Engineer, Father, Jiu-Jitsu Purple Belt, Musician. Documenting my journey through code, puzzles, and projects.",
+  description: "Senior Software Engineer, Fullstack Developer, Father, Jiu-Jitsu Purple Belt. Documenting my journey through code, puzzles, and projects.",
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({
