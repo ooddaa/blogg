@@ -1,0 +1,92 @@
+---
+title: "AoC 2025 Day 7/2: State Doesn't Map to the Problem"
+date: "2025-12-20"
+description: "When your data structures fight against the problem instead of representing it naturally"
+tags: ["AoC", "state", "Go", "data-structures"]
+---
+
+# The Mistake
+
+Your function parameters and data structures should **directly represent** the problem's entities. When they don't, you end up writing convoluted code that fights against what you're trying to express.
+
+I encountered this on AoC 2025 Day 7 while tracking beams through a grid of mirrors and splitters. Instead of representing the problem naturally, I created an overly complex sparse data structure that made simple operations incredibly difficult.
+
+## Red Flags
+
+You know you're in this trap when:
+
+- Complex conditionals with overlapping branches (`containsNode && isLastRow`, `!containsNode && isLastRow`...)
+- You can't clearly state what your function does in one sentence
+- You're asking indirect questions ("does this row contain my node?") instead of direct ones ("what's at position (row, col)?")
+- Fighting your data structure to express simple operations
+- Mental translation required to understand what your code does
+
+## My Failed Attempt
+
+I started with a sparse grid approach, tracking "node numbers" instead of actual positions:
+
+```go
+// ❌ BAD: sparse grid of splitter positions, tracking "node number"
+ProcessGrid(grid [][]int, node int, rowId int) {
+    // Forced awkward logic:
+    // "does row contain node?" 
+    // "is node a splitter?"
+    // "which node connects to which?"
+    
+    if containsNode && isLastRow {
+        total += 1
+    }
+    if !containsNode && !isLastRow {
+        total += ProcessGrid(grid, node, nextRowId)
+    }
+    // ... more complex branching
+}
+```
+
+This made me ask the wrong questions:
+- "Does this row contain my node?" 
+- "Is this node a splitter?"
+- "Which nodes connect to each other?"
+
+## The Fix
+
+I rewrote it to use the actual grid and track real positions:
+
+```go
+// ✅ GOOD: actual grid, tracking position
+func walk(grid []string, row, col int) int {
+    // Direct questions about the actual problem:
+    // "what's at position (row, col)?"
+    
+    if row >= len(grid) { return 1 }              // beam reached bottom
+    if grid[row][col] == '.' { return walk(grid, row+1, col) }    // beam continues  
+    if grid[row][col] == '^' { 
+        return walk(grid, row+1, col-1) + walk(grid, row+1, col+1)  // beam splits
+    }
+    return 0
+}
+```
+
+Now the code reads like the problem description:
+- A beam moves down through the grid
+- At empty space (`.`), it continues down
+- At a splitter (`^`), it splits left and right
+- When it reaches the bottom, it counts as 1
+
+## The "Read It Aloud" Test
+
+**Can you read your code aloud and it sounds like the problem description?**
+
+**Bad code** (requires mental translation):
+> "If contains node and is last row, add one. If doesn't contain node and isn't last row, process grid with node and next row..."
+
+**Good code** (matches the problem):
+> "If beam reached bottom, return 1. If empty space, walk down. If splitter, walk left plus walk right."
+
+## Lesson Learned
+
+When your data structure makes the problem hard to express, **change the data structure**. Don't try to make complex logic work around a poor representation.
+
+Your code should read like the problem description. If it doesn't, step back and ask: "What are the actual entities in this problem?" Then represent those directly.
+
+**The golden rule**: If you can't clearly state what your function does in one sentence, your abstraction is probably wrong.
