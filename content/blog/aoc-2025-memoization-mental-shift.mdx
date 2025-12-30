@@ -1,0 +1,108 @@
+---
+title: "Memoization—Stop Recomputing"
+date: "2025-12-30"
+description: "When your recursive solution is exponentially slow because you forgot to cache."
+tags: ["AoC:25:07:2", "Go", "memoization", "dynamic-programming", "performance"]
+---
+
+# The Mistake
+
+Writing a correct recursive solution that recomputes the same subproblems over and over, resulting in exponential time complexity.
+
+## My Gloomy Reality
+
+My Day 7 Part 2 recursive solution was correct. It passed the test input (16 rows). Then I ran it on the real input (142 rows) and... it hung. Forever.
+
+The problem: every time a beam splits, both branches might eventually reach the same position. Without caching, I recomputed the entire subtree below that position every single time.
+
+```go path=null start=null
+// No memoization: exponential time
+func walk(grid []string, row, col int) int {
+    if row >= len(grid) || col < 0 || col >= len(grid[0]) {
+        return 1
+    }
+    if grid[row][col] == '^' {
+        return walk(grid, row+1, col-1) + walk(grid, row+1, col+1)
+    }
+    return walk(grid, row+1, col)
+}
+```
+
+With a grid full of splitters, this is O(2^n) (aka O(branches ^ depth)). On 142 rows, that's astronomical.
+
+# The Insight
+
+The trigger question: *"Am I computing the same thing more than once?"*
+
+Yes! Position (100, 50) might be reached by thousands of different paths. Each time, I was recomputing "how many timelines from (100, 50)?" from scratch.
+
+But the answer for (100, 50) is always the same—it's a **property of the position**, not of which beam asked. Like asking "how far is Denver from LA?"—doesn't matter which car asks.
+
+# The Fix
+
+Cache results. Compute each position once.
+
+```go path=null start=null
+func walk(grid []string, row, col int, memo map[Pos]int) int {
+    if row >= len(grid) || col < 0 || col >= len(grid[0]) {
+        return 1
+    }
+
+    // Check cache first
+    pos := Pos{row, col}
+    if v, ok := memo[pos]; ok {
+        return v  // already computed!
+    }
+
+    var result int
+    if grid[row][col] == '^' {
+        result = walk(grid, row+1, col-1, memo) + walk(grid, row+1, col+1, memo)
+    } else {
+        result = walk(grid, row+1, col, memo)
+    }
+
+    memo[pos] = result  // store for later
+    return result
+}
+```
+
+Now it's O(rows × cols)—each position computed exactly once. The 142-row grid finishes instantly.
+
+# When You CAN'T Memoize
+
+Memoization works when the answer depends **only** on the cache key:
+
+```go path=null start=null
+// ✅ CAN memoize: only position matters
+func walk(row, col int) int
+
+// ❌ CAN'T memoize on (row, col): extra state affects answer
+func countPaths(row, col int, visited map[Pos]bool) int
+```
+
+If your function has hidden state (like `visited`), the same position can give different answers depending on *how you got there*. Then you either:
+1. Include ALL state in the cache key (often impractical)
+2. Accept you can't memoize this one
+
+Day 7 beams COULD memoize because beams don't "remember" their path—they just split and count.
+
+# Lesson Learned
+
+**Ask: "Am I computing the same thing more than once?"**
+
+If yes, and the answer depends only on the inputs (no hidden state), memoize:
+
+```go path=null start=null
+if cached, ok := memo[key]; ok {
+    return cached
+}
+result := /* actual computation */
+memo[key] = result
+return result
+```
+
+Three lines turn exponential into linear.
+
+---
+
+**Original puzzle:** [Advent of Code 2025 Day 7](https://adventofcode.com/2025/day/7)

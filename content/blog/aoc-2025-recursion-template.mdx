@@ -1,0 +1,133 @@
+---
+title: "The Recursion Template"
+date: "2025-12-30"
+description: "Put boundary checks in the base case, not at call sites. Simplify the technique so you can focus on the puzzle."
+tags: ["AoC:25:07:2", "Go", "recursion", "patterns"]
+---
+
+# The Mistake
+
+Checking edge cases at call sites instead of in the base case, leading to tangled, confusing code.
+
+## My Gloomy Reality
+
+I wrote this mess:
+
+```go path=null start=null
+if isSplit(grid, row, col) {
+    // here we need to recurse
+    // try do left first
+    // if there's a left
+    if col-1 >= 0 {
+        total += walk(grid, row+1, col-1)
+        // do we return here?????
+    } else {
+        // this is dodgy af, I dont understand
+        return total
+    }
+
+    // then do right, if theres a Right
+    if col+1 < len(grid[0]) {
+        total += walk(grid, row+1, col+1)
+        // do we return here?????
+    } else {
+        // this is dodgy af, I dont understand
+        return total
+    }
+}
+```
+
+Look at those comments: *"do we return here?????"* and *"this is dodgy af, I dont understand"*.
+
+I was confused because I was checking bounds **before** each recursive call. This scattered edge case logic throughout the function and made me unsure what to return when bounds failed.
+
+The technique was fighting me, which meant I couldn't focus on the actual puzzle.
+
+# The Insight
+
+**Boundary checks go in the base case, not at call sites.**
+
+```go path=null start=null
+// ❌ BAD: checking before recursing
+if col-1 >= 0 {
+    total += walk(col-1)
+} else {
+    return total  // "dodgy af, I dont understand"
+}
+
+// ✅ GOOD: let invalid states reach the function
+func walk(col int) int {
+    if col < 0 { return 1 }  // forced to decide: what IS the answer here?
+    return walk(col-1) + walk(col+1)
+}
+```
+
+Why? Checking at call sites lets you **avoid** deciding what the answer is for invalid inputs. The base case **forces** you to answer: "a beam that goes off the edge contributes \_\_\_ to the total."
+
+Once you answer that question, the recursion becomes clean.
+
+# The Fix
+
+Follow this template:
+
+```go path=null start=null
+func walk(state) Result {
+    // 1. Base case(s): when to stop
+    if done(state) { return baseValue }
+    
+    // 2. Recurse: combine results from children
+    return combine(walk(next1), walk(next2), ...)
+}
+```
+
+**Three questions to answer:**
+1. **What's the state?** (position, node, index...)
+2. **When do I stop?** (out of bounds, leaf node, target found...)
+3. **How do I combine children?** (sum, max, append, AND/OR...)
+
+**Day 7 beams:**
+
+```go path=null start=null
+func walk(grid []string, row, col int) int {
+    // Base case: reached bottom or out of bounds
+    if row >= len(grid) || col < 0 || col >= len(grid[0]) {
+        return 1
+    }
+    
+    // Recurse based on cell type
+    if grid[row][col] == '^' {
+        return walk(grid, row+1, col-1) + walk(grid, row+1, col+1)
+    }
+    return walk(grid, row+1, col)
+}
+```
+
+No "dodgy af" confusion. Base case handles all edge conditions. Recursive case is clean.
+
+# Recursion vs Iteration
+
+Both can solve the same problems. Pick whichever you can write correctly faster.
+
+**Signals for recursion:**
+- Problem describes a **process** (beam travels, splits, explores...)
+- Problem has **tree-like branching** (paths split, choices multiply)
+- You naturally think "do X, then do the same thing on the rest"
+
+**Signals for iteration:**
+- Problem has **linear structure** (process array left-to-right)
+- Stack depth might be an issue (very deep recursion)
+- The order to compute things is obvious (fill table row by row)
+
+**For AoC:** Start with recursion. It usually matches how the problem is described. Add memoization if slow. Only convert to iteration if you hit stack limits (rare in AoC).
+
+# Lesson Learned
+
+**Simplify the technique so you can focus on the puzzle.**
+
+When the recursion template is automatic—base case first, recurse second—you stop thinking about *how* to recurse and start thinking about *what* the problem actually needs.
+
+The "dodgy af" comments were me fighting the technique. The clean version freed my brain to think about beams and splitters instead of `if` statements and return values.
+
+---
+
+**Original puzzle:** [Advent of Code 2025 Day 7](https://adventofcode.com/2025/day/7)

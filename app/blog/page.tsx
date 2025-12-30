@@ -6,7 +6,10 @@ export default function BlogPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <h1 className="text-4xl font-bold mb-8">Advent of Code Lessons</h1>
+      <Link href="/" className="text-slate-600 hover:text-slate-800 hover:underline mb-4 inline-block">
+        ← Back to home
+      </Link>
+      <h1 className="text-4xl font-bold mb-8">All Posts</h1>
 
       <div className="space-y-6">
         {posts.map((post) => (
