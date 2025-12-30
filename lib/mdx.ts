@@ -56,3 +56,62 @@ export function getPostBySlug(slug: string): PostWithContent {
     content,
   }
 }
+
+// Define the main sections
+export const SECTIONS = {
+  PRODUCTIVITY: 'productivity',
+  AOC: 'aoc',
+  PROJECTS: 'projects',
+  MUSINGS: 'musings',
+} as const
+
+export type Section = typeof SECTIONS[keyof typeof SECTIONS]
+
+// Get posts filtered by section
+export function getPostsBySection(section: Section): Post[] {
+  const allPosts = getAllPosts()
+  return allPosts.filter(post => 
+    post.tags && post.tags.includes(section)
+  )
+}
+
+// Get latest post from each section for homepage
+export function getLatestFromEachSection(): Record<Section, Post | null> {
+  const sections = Object.values(SECTIONS)
+  const result: Record<Section, Post | null> = {} as Record<Section, Post | null>
+  
+  sections.forEach(section => {
+    const sectionPosts = getPostsBySection(section)
+    result[section] = sectionPosts.length > 0 ? sectionPosts[0] : null
+  })
+  
+  return result
+}
+
+// Get section metadata
+export function getSectionInfo(section: Section) {
+  const sectionMap = {
+    [SECTIONS.PRODUCTIVITY]: {
+      title: 'Developer Productivity',
+      description: 'My journey to becoming a 10x developer',
+      icon: '🚀'
+    },
+    [SECTIONS.AOC]: {
+      title: 'Advent of Code',
+      description: 'Learning from coding puzzle mistakes',
+      icon: '🎄'
+    },
+    [SECTIONS.PROJECTS]: {
+      title: 'Projects',
+      description: 'Things I\'ve built and keep iterating on',
+      icon: '⚡'
+    },
+    [SECTIONS.MUSINGS]: {
+      title: 'Musings',
+      description: 'Random thoughts and experiments',
+      icon: '💭'
+    },
+  }
+  
+  return sectionMap[section]
+}
