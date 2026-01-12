@@ -1,0 +1,161 @@
+---
+title: "Right Tool for the Job"
+date: "2026-01-12"
+description: "When slices technically work but maps (or Union-Find) are what you actually need."
+tags: ["AoC:25:08:1", "Go", "data-structures", "Union-Find"]
+---
+
+# The Mistake
+
+Using slices for set operations when maps (or a dedicated algorithm) would prevent entire categories of bugs.
+
+## My Gloomy Reality
+
+Day 8 involved connecting 3D junctions into circuits. Process edges sorted by distance, group connected points. Simple.
+
+My gut said: use maps. Go doesn't have sets, but `map[string]bool` gives O(1) lookup and automatic deduplication.
+
+But then I thought: *"Let me see if I can do it with slices. Anything can be done with slices."*
+
+Famous last words.
+
+```go path=null start=null
+type Point [3]int
+
+// Each circuit is a slice of points
+circuits := []*[]Point{}
+
+// Registry maps each point to its circuit
+registry := map[string]*[]Point{}
+```
+
+When merging two circuits:
+
+```go path=null start=null
+if groupA != groupB {
+    for _, p := range *groupB {
+        key := fmt.Sprintf("%d,%d,%d", p[0], p[1], p[2])
+        registry[key] = groupA
+    }
+    *groupA = append(*groupA, *groupB...)
+}
+```
+
+Looks reasonable? Here's the trap.
+
+# The Stale Reference Bug
+
+After merging, my `circuits` slice looked like this:
+
+```go path=null start=null
+// Before merge:
+circuits[0] -> [A, B]
+circuits[1] -> [C, D]
+
+// After merging circuit 1 into circuit 0:
+circuits[0] -> [A, B, C, D]  // merged!
+circuits[1] -> [C, D]        // STALE! Still exists!
+```
+
+The registry was correctly updated—all points now pointed to `circuits[0]`. But `circuits[1]` was still there, a ghost.
+
+When counting:
+
+```go path=null start=null
+for _, circ := range circuits {
+    lengths = append(lengths, len(*circ))
+}
+// lengths = [4, 2] ← WRONG! C and D counted twice!
+```
+
+My answer was too high.
+
+# The Map Fix
+
+Switching to `map[string]bool` as sets solved deduplication within circuits. But stale references remained.
+
+The fix was to ignore `circuits` entirely and collect unique groups from the registry:
+
+```go path=null start=null
+uniqueSets := map[*Circuit]bool{}
+for _, grp := range registry {
+    uniqueSets[grp] = true  // same pointer = same entry
+}
+
+for grp := range uniqueSets {
+    sizes = append(sizes, len(*grp))
+}
+```
+
+This worked. But it felt like fighting the data structure at every step.
+
+# The Mindshift: Union-Find
+
+Then I discovered Union-Find. An algorithm *designed* for this exact problem.
+
+The beauty? It doesn't maintain a list of groups. Just parent relationships:
+
+```go path=null start=null
+type UnionFind struct {
+    parent map[string]string
+    rank   map[string]int
+}
+
+func (uf *UnionFind) Find(x string) string {
+    if uf.parent[x] != x {
+        uf.parent[x] = uf.Find(uf.parent[x])  // path compression
+    }
+    return uf.parent[x]
+}
+
+func (uf *UnionFind) Union(x, y string) {
+    rootX, rootY := uf.Find(x), uf.Find(y)
+    if rootX == rootY {
+        return
+    }
+    if uf.rank[rootX] < uf.rank[rootY] {
+        uf.parent[rootX] = rootY
+    } else if uf.rank[rootX] > uf.rank[rootY] {
+        uf.parent[rootY] = rootX
+    } else {
+        uf.parent[rootY] = rootX
+        uf.rank[rootX]++
+    }
+}
+```
+
+To count group sizes:
+
+```go path=null start=null
+groups := map[string]int{}
+for point := range uf.parent {
+    root := uf.Find(point)
+    groups[root]++
+}
+```
+
+No stale references. No ghost circuits. No manual deduplication. The algorithm's structure makes these bugs **impossible**.
+
+# Lesson Learned
+
+**Yes, anything CAN be done with slices. But "can" doesn't mean "should."**
+
+My slice approach required:
+- Manually tracking all groups
+- Manually updating registries
+- Manually deduplicating stale references
+- Fighting the data structure at every step
+
+Union-Find required:
+- `Union(a, b)` when points connect
+- `Find(x)` for group membership
+
+The right data structure doesn't just make code cleaner—it makes entire categories of bugs impossible.
+
+**Trust your gut.** When a data structure feels wrong, it probably is.
+
+**Learn the classics.** Union-Find has been around since 1964. Smart people already solved this. Standing on giants beats reinventing wobbly wheels.
+
+---
+
+**Original puzzle:** [Advent of Code 2025 Day 8](https://adventofcode.com/2025/day/8)
