@@ -60,7 +60,7 @@ export function getPostBySlug(slug: string): PostWithContent {
 // Define the main sections
 export const SECTIONS = {
   PRODUCTIVITY: 'productivity',
-  AOC: 'aoc',
+  CODING: 'coding',
   PROJECTS: 'projects',
   MUSINGS: 'musings',
 } as const
@@ -73,9 +73,13 @@ export function getPostsBySection(section: Section): Post[] {
   return allPosts.filter(post => {
     if (!post.tags) return false
     
-    // Special handling for AoC section - match any tag starting with "AoC:"
-    if (section === SECTIONS.AOC) {
-      return post.tags.some(tag => tag.startsWith('AoC:'))
+    // Special handling for Coding Challenges section
+    if (section === SECTIONS.CODING) {
+      return post.tags.some(tag => 
+        tag.startsWith('AoC:') ||  // AoC posts
+        tag === 'LeetCode' ||      // LeetCode posts
+        tag === 'aoc'              // Legacy AoC posts
+      )
     }
     
     // For other sections, match exact tag
@@ -104,10 +108,10 @@ export function getSectionInfo(section: Section) {
       description: 'My journey to becoming a 10x developer',
       icon: '🚀'
     },
-    [SECTIONS.AOC]: {
-      title: 'Advent of Code',
-      description: 'Learning from coding puzzle mistakes',
-      icon: '🎄'
+    [SECTIONS.CODING]: {
+      title: 'Coding Challenges',
+      description: 'Lessons learned from AoC, LeetCode, and other puzzles',
+      icon: '🧩'
     },
     [SECTIONS.PROJECTS]: {
       title: 'Projects',

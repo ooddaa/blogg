@@ -1,0 +1,136 @@
+---
+title: "The Grid I Didn't Need"
+date: "2026-01-14"
+description: "Building a 2D grid and recursive solver for a problem that needed simple addition."
+tags: ["LeetCode", "TypeScript", "dynamic-programming", "over-engineering"]
+---
+
+# The Mistake
+
+I turned a simple greedy problem into a complex dynamic programming nightmare because I was solving for constraints that didn't exist.
+
+The problem: **Best Time to Buy and Sell Stock II**
+- Given stock prices over time: `[7,1,5,3,6,4]`
+- Can buy/sell multiple times (but hold max 1 share)
+- Can buy and sell on the same day
+- Find maximum profit
+
+But I didn't solve this problem. I solved: "Find optimal non-overlapping profitable intervals" which is infinitely harder.
+
+## What I Built
+
+I built this guy:
+
+```typescript path=null start=null
+type Grid = number[][]
+type Profit = [number, number, number]
+
+function makeGrid(input: number[]): Grid {
+  const grid: number[][] = []
+  input.forEach((sell, daySell) => {
+    input.forEach((buy, dayBuy) => {
+      if (!grid[dayBuy]) grid[dayBuy] = []
+      if (daySell >= dayBuy) {
+        grid[dayBuy][daySell] = sell - buy  // profit matrix
+      } else {
+        grid[dayBuy][daySell] = 0
+      }
+    })
+  })
+  return grid
+}
+
+function solve(grid: Grid): number {
+  const dailyProfits = getDailyProfits(grid)
+  const positiveProfits = dailyProfits.filter(([profit]) => profit > 0)
+  
+  return positiveProfits.sort((a, b) => b[0] - a[0]).reduce((acc, val) => {
+    const [profit, rowId, colId] = val 
+    const subGrid = getSubgrid(colId+1, grid)  // recursive madness
+    const free: number = solve(subGrid)
+    return [...acc, profit + free]
+  }, [] as number[])[0]
+}
+```
+
+A **2D grid** where `grid[buyDay][sellDay] = profit`. Then recursive optimization to find non-overlapping profitable intervals. 
+
+Why? Because I **saw the problem wrong**.
+
+## How I Saw The Problem
+
+I visualized it as finding optimal contiguous subarrays:
+```typescript path=null start=null
+// Price: [1     5]   [2     6]  3  
+//      buy↑ sell↑  buy↑ sell↑    
+//        profit=4    profit=4
+```
+
+This led me to think: "I need to partition the array into non-overlapping profitable segments and optimize the partition."
+
+Classic interval scheduling problem → dynamic programming → recursive optimization → 2D grids.
+
+# The Insight
+
+But here's what I missed: **Any profitable interval can be decomposed into individual day-to-day gains without losing profit.**
+
+Take the interval `[1, 3, 5]`:
+- My way: Buy at 1, sell at 5 = +4
+- Simple way: (3-1) + (5-3) = 2 + 2 = 4 ✓
+
+Since you can "buy and sell on the same day", you can chain transactions instantly. This means:
+- Buy day 1 at $1
+- Sell day 2 at $3, immediately buy at $3  
+- Sell day 3 at $5
+
+Net result: captured $(3-1) + $(5-3) = +4$
+
+**The mathematical equivalence:** Every profitable "mountain" decomposes into profitable steps.
+
+# The Fix
+
+All I actually needed:
+
+```typescript path=null start=null
+function maxProfit(prices: number[]): number {
+    let profit = 0;
+    
+    for (let i = 1; i < prices.length; i++) {
+        if (prices[i] > prices[i - 1]) {
+            profit += prices[i] - prices[i - 1];
+        }
+    }
+    
+    return profit;
+}
+```
+
+No grid. No recursion. No interval optimization. Just add up every profitable day-to-day move.
+
+For `[7,1,5,3,6,4]`:
+- Day 1→2: 1-7 = -6 (skip)
+- Day 2→3: 5-1 = +4 ✓
+- Day 3→4: 3-5 = -2 (skip)  
+- Day 4→5: 6-3 = +3 ✓
+- Day 5→6: 4-6 = -2 (skip)
+- Total: 4 + 3 = 7
+
+# Lesson Learned
+
+**Before building complex solutions, ask: "What constraints am I actually solving for?"**
+
+I was solving for constraints that didn't exist:
+- ✗ "Transactions can't overlap in time" (they can - same day trading)
+- ✗ "Need to optimize interval selection" (every profitable move is independent)
+- ✗ "Complex state transitions" (state is just: do I make money today?)
+
+The problem statement contained the key: "can buy and sell on the same day." This phrase eliminates the entire complexity of interval scheduling.
+
+Sometimes the sophisticated solution shows you *can* handle complexity, but the real skill is recognizing when complexity isn't needed.
+
+My 2D grid approach would be brilliant for "Best Time to Buy and Sell Stock III" (at most K transactions). But for the unlimited transactions variant, it's like bringing a Formula 1 car to a go-kart race.
+
+![My overengineered code solution](/images/my-leetcode.jpg)
+---
+
+**Original problem:** [LeetCode 122: Best Time to Buy and Sell Stock II](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/)

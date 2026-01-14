@@ -11,7 +11,7 @@ Day 6's "cephalopod math worksheet" taught me three painful lessons about input 
 
 Treating test input as *the* specification instead of *one* example.
 
-## My Gloomy Reality
+## The Problem
 
 The test input looked beautifully uniform:
 
@@ -39,7 +39,7 @@ Variable-width columns. Some are 2 characters, some are 4, some are 5. My hardco
 
 Your terminal wraps long lines. 5 rows can look like 50+.
 
-## My Gloomy Reality
+## What Happened
 
 When I first opened the real input, my terminal showed what looked like dozens of rows of numbers. I started panicking—"wait, the problem said there's only one operator row at the bottom, but I see numbers everywhere!"
 
@@ -51,7 +51,7 @@ I wasted time trying to understand a "complex multi-row structure" that didn't e
 
 Don't `TrimSpace`, `ToLower`, or transform input until you understand WHY.
 
-## My Gloomy Reality
+## My Approach
 
 My first instinct was to clean up the input:
 
